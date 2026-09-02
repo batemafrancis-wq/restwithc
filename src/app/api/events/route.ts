@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { eventInquiries } from "@/db/schema";
+
+const mockInquiries = [
+  {
+    id: 1,
+    fullName: "Rosa Chen",
+    email: "rosa@example.com",
+    phone: "(555) 910-2040",
+    eventType: "Birthday Dinner",
+    guestCount: 18,
+    preferredDate: "2026-09-18",
+    message: "Looking for a private room for a milestone birthday",
+    createdAt: "2026-09-01T12:00:00.000Z",
+  },
+];
 
 export async function POST(request: Request) {
   try {
@@ -11,20 +23,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    const [created] = await db
-      .insert(eventInquiries)
-      .values({
-        fullName,
-        email,
-        phone,
-        eventType,
-        guestCount: Number(guestCount),
-        preferredDate: body.preferredDate || null,
-        message: body.message || null,
-      })
-      .returning();
+    const inquiry = {
+      id: Date.now(),
+      fullName,
+      email,
+      phone,
+      eventType,
+      guestCount: Number(guestCount),
+      preferredDate: body.preferredDate || null,
+      message: body.message || null,
+      createdAt: new Date().toISOString(),
+    };
 
-    return NextResponse.json({ inquiry: created }, { status: 201 });
+    mockInquiries.unshift(inquiry);
+
+    return NextResponse.json({ inquiry, status: "mocked" }, { status: 201 });
   } catch (error) {
     console.error("Failed to create event inquiry", error);
     return NextResponse.json({ error: "Unable to submit inquiry." }, { status: 500 });

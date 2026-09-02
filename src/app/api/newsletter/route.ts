@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { newsletterSubscribers } from "@/db/schema";
-import { sql } from "drizzle-orm";
+
+const mockSubscribers = ["hello@umami-restaurant.com"];
 
 export async function POST(request: Request) {
   try {
@@ -10,15 +9,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
     }
 
-    await db
-      .insert(newsletterSubscribers)
-      .values({ email })
-      .onConflictDoUpdate({
-        target: newsletterSubscribers.email,
-        set: { createdAt: sql`now()` },
-      });
+    if (!mockSubscribers.includes(email)) {
+      mockSubscribers.push(email);
+    }
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true, mode: "mock" }, { status: 201 });
   } catch (error) {
     console.error("Failed to subscribe", error);
     return NextResponse.json({ error: "Unable to subscribe." }, { status: 500 });

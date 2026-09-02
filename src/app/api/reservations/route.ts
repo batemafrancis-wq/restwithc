@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { reservations } from "@/db/schema";
-import { desc } from "drizzle-orm";
+
+const mockReservations = [
+  {
+    id: 1,
+    fullName: "Avery Smith",
+    email: "avery@example.com",
+    phone: "(555) 010-0421",
+    partySize: 2,
+    reservationDate: "2026-09-10",
+    reservationTime: "7:30 PM",
+    occasion: "Anniversary",
+    dietaryNotes: "Window seat if available",
+    location: "Umami — Flagship, Hillcrest",
+    status: "pending",
+    createdAt: "2026-09-01T18:00:00.000Z",
+  },
+];
 
 export async function POST(request: Request) {
   try {
@@ -12,22 +26,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    const [created] = await db
-      .insert(reservations)
-      .values({
-        fullName,
-        email,
-        phone,
-        partySize: Number(partySize),
-        reservationDate,
-        reservationTime,
-        occasion: body.occasion || null,
-        dietaryNotes: body.dietaryNotes || null,
-        location: body.location || undefined,
-      })
-      .returning();
+    const reservation = {
+      ...body,
+      id: Date.now(),
+      partySize: Number(partySize),
+      location: body.location || "Umami — Flagship, Hillcrest",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
 
-    return NextResponse.json({ reservation: created }, { status: 201 });
+    mockReservations.unshift(reservation);
+
+    return NextResponse.json({ reservation, status: "mocked" }, { status: 201 });
   } catch (error) {
     console.error("Failed to create reservation", error);
     return NextResponse.json({ error: "Unable to submit reservation." }, { status: 500 });
@@ -35,6 +45,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const rows = await db.select().from(reservations).orderBy(desc(reservations.createdAt)).limit(50);
-  return NextResponse.json({ reservations: rows });
+  return NextResponse.json({ reservations: mockReservations });
 }

@@ -1,24 +1,33 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const globalForDb = globalThis as typeof globalThis & {
-  __arenaNextJsPostgresqlPool?: Pool;
+type MockDb = {
+  execute: () => Promise<{ rows: unknown[]; rowCount: number }>;
+  select: () => {
+    from: () => {
+      orderBy: () => {
+        limit: () => Promise<unknown[]>;
+      };
+    };
+  };
+  insert: () => {
+    values: () => {
+      returning: () => Promise<unknown[]>;
+      onConflictDoUpdate: () => Promise<void>;
+    };
+  };
 };
 
-export const pool =
-  globalForDb.__arenaNextJsPostgresqlPool ??
-  new Pool({
-    connectionString: databaseUrl,
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__arenaNextJsPostgresqlPool = pool;
-}
-
-export const db = drizzle(pool);
+export const db: MockDb = {
+  execute: async () => ({ rows: [], rowCount: 0 }),
+  select: () => ({
+    from: () => ({
+      orderBy: () => ({
+        limit: async () => [],
+      }),
+    }),
+  }),
+  insert: () => ({
+    values: () => ({
+      returning: async () => [],
+      onConflictDoUpdate: async () => undefined,
+    }),
+  }),
+};
